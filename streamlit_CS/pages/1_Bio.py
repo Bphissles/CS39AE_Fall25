@@ -1,4 +1,5 @@
 import streamlit as st
+from pathlib import Path
 
 st.title("👋 My Bio")
 
@@ -14,7 +15,8 @@ FUN_FACTS = [
     "I’m learning data visualization and machine learning",
     "I want to build productivity, and pipeline related tools to accelerate the work I do",
 ]
-PHOTO_PATH = "assets/headshot.jpeg"  # Put a file in repo root or set a URL
+# Get the absolute path to the assets folder (go up from pages to streamlit_CS, then into assets)
+PHOTO_PATH = Path(__file__).parent.parent / "assets" / "headshot.jpeg"
 
 # ---------- Layout ----------
 col1, col2 = st.columns([1, 2], vertical_alignment="center")
