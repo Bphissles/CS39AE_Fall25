@@ -14,7 +14,7 @@ FUN_FACTS = [
     "I’m learning data visualization and machine learning",
     "I want to build productivity, and pipeline related tools to accelerate the work I do",
 ]
-PHOTO_PATH = "./assets/headshot.png"  # Put a file in repo root or set a URL
+PHOTO_PATH = "assets/headshot.png"  # Put a file in repo root or set a URL
 
 # ---------- Layout ----------
 col1, col2 = st.columns([1, 2], vertical_alignment="center")
