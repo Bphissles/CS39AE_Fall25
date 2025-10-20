@@ -16,6 +16,7 @@ FUN_FACTS = [
     "I want to build productivity, and pipeline related tools to accelerate the work I do",
 ]
 # Get the absolute path to the assets folder (go up from pages to streamlit_CS, then into assets)
+# this was an AI solution since the image would not appear as I tried several different approaches to resolve the issue
 PHOTO_PATH = Path(__file__).parent.parent / "assets" / "headshot.jpeg"
 
 # ---------- Layout ----------
@@ -25,6 +26,7 @@ with col1:
     try:
         st.image(PHOTO_PATH, caption=NAME, use_container_width=True)
     except Exception as e:
+        # Attempting to see what was actually happening with image viewing issue
         st.error(f"Could not load image: {e}")
         st.info(f"Looking for image at: {PHOTO_PATH}")
 with col2:
