@@ -22,8 +22,9 @@ col1, col2 = st.columns([1, 2], vertical_alignment="center")
 with col1:
     try:
         st.image(PHOTO_PATH, caption=NAME, use_container_width=True)
-    except Exception:
-        st.info("Add a photo named `your_photo.jpg` to the repo root, or change PHOTO_PATH.")
+    except Exception as e:
+        st.error(f"Could not load image: {e}")
+        st.info(f"Looking for image at: {PHOTO_PATH}")
 with col2:
     st.subheader(NAME)
     st.write(PROGRAM)
