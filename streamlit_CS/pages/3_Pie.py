@@ -65,7 +65,7 @@ if df is not None:
     )
     
     # Create the pie chart
-    st.markdown("### Distribution Chart")
+    st.markdown("### Distribution Chart - new title")
     
     # Map color scheme names to plotly color sequences
     color_map = {
