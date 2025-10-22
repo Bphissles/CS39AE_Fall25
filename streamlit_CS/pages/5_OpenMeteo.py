@@ -32,13 +32,13 @@ def get_weather():
                           "wind (km/h)": j["wind_speed_10m"]}])
 
 st.subheader("Weather Data")
-df = get_weather()
-st.dataframe(df)
+# df = get_weather()
+# st.dataframe(df)
 
 # Tiny sample to keep the demo working even if the API is rate-limiting
-SAMPLE_DF = pd.DataFrame(
-    [{"time": pd.to_datetime("2025-10-22 16:41:55"), "temperature (°C)": 21.8, "wind (km/h)": 7.4}]
-)
+# SAMPLE_DF = pd.DataFrame(
+#     [{"time": pd.to_datetime("2025-10-22 16:41:55"), "temperature (°C)": 21.8, "wind (km/h)": 7.4}]
+# )
 
 
 @st.cache_data(ttl=600, show_spinner=False)  # Cache for 10 minutes
