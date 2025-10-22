@@ -21,6 +21,7 @@ st.caption("Friendly demo with manual refresh + fallback data so it never crashe
 
 
 lat, lon = 39.7392, -104.9903  # Denver
+# Documentation: https://open-meteo.com/en/docs
 wurl = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,wind_speed_10m"
 @st.cache_data(ttl=600) # cached for 10 minutes
 def get_weather():
@@ -28,7 +29,7 @@ def get_weather():
     j = r.json()["current"]
     return pd.DataFrame([{"time": pd.to_datetime(j["time"]),
                           "temperature (°C)": j["temperature_2m"],
-                          "wind": j["wind_speed_10m"]}])
+                          "wind (km/h)": j["wind_speed_10m"]}])
 
 st.subheader("Weather Data")
 df = get_weather()
@@ -36,26 +37,30 @@ st.dataframe(df)
 
 # Tiny sample to keep the demo working even if the API is rate-limiting
 SAMPLE_DF = pd.DataFrame(
-    [{"time": pd.to_datetime("2025-10-22 16:41:55"), "temperature (°C)": 21.8, "wind (Units?)": 7.4}]
+    [{"time": pd.to_datetime("2025-10-22 16:41:55"), "temperature (°C)": 21.8, "wind (km/h)": 7.4}]
 )
 
-st.dataframe(SAMPLE_DF)
 
-
-# def fetch_prices(url: str):
-#     """Return (df, error_message). Never raise. Safe for beginners."""
-#     try:
-#         resp = requests.get(url, timeout=10, headers=HEADERS)
-#         # Handle 429 and other non-200s
-#         if resp.status_code == 429:
-#             retry_after = resp.headers.get("Retry-After", "a bit")
-#             return None, f"429 Too Many Requests — try again after {retry_after}s"
-#         resp.raise_for_status()
-#         data = resp.json()
-#         df = pd.DataFrame(data).T.reset_index().rename(columns={"index": "coin"})
-#         return df, None
-#     except requests.RequestException as e:
-#         return None, f"Network/HTTP error: {e}"
+@st.cache_data(ttl=600, show_spinner=False)  # Cache for 10 minutes
+def fetch_weather(url: str):
+    """Return (df, error_message). Never raise. Safe for beginners."""
+    try:
+        resp = requests.get(url, timeout=10)
+        # Handle 429 and other non-200s
+        if resp.status_code == 429:
+            retry_after = resp.headers.get("Retry-After", "a bit")
+            return None, f"429 Too Many Requests — try again after {retry_after}s"
+        resp.raise_for_status()
+        data = resp.json()
+        current = data["current"]
+        df = pd.DataFrame([{
+            "time": pd.to_datetime(current["time"]),
+            "temperature (°C)": current["temperature_2m"],
+            "wind (km/h)": current["wind_speed_10m"]
+        }])
+        return df, None
+    except requests.RequestException as e:
+        return None, f"Network/HTTP error: {e}"
 
 #Step 4 - REFRESH BUTTON
 # --- Auto Refresh Controls ---
