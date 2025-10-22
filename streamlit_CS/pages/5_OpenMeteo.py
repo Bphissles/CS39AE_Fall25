@@ -16,37 +16,33 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("📡 Simple Live Data Demo (CoinGecko)")
+st.title("📡 Simple Live Data Demo (Open-Meteo)")
 st.caption("Friendly demo with manual refresh + fallback data so it never crashes.")
 
-#Step 2 - Config
-# COINS = ["bitcoin", "ethereum"]
-# VS = "usd"
-# HEADERS = {"User-Agent": "msudenver-dataviz-class/1.0", "Accept": "application/json"}
 
 lat, lon = 39.7392, -104.9903  # Denver
 wurl = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,wind_speed_10m"
-@st.cache_data(ttl=600)
+# @st.cache_data(ttl=600)
 def get_weather():
     r = requests.get(wurl, timeout=10); r.raise_for_status()
     j = r.json()["current"]
     return pd.DataFrame([{"time": pd.to_datetime(j["time"]),
-                          "temperature": j["temperature_2m"],
+                          "temperature (°C)": j["temperature_2m"],
                           "wind": j["wind_speed_10m"]}])
 
 st.subheader("Weather Data")
 df = get_weather()
 st.dataframe(df)
 
-# API_URL = build_url(COINS)
-
 # Tiny sample to keep the demo working even if the API is rate-limiting
-# SAMPLE_DF = pd.DataFrame(
-#     [{"coin": "bitcoin", VS: 68000}, {"coin": "ethereum", VS: 3500}]
-# )
+SAMPLE_DF = pd.DataFrame(
+    [{"time": pd.to_datetime("2025-10-22 16:41:55"), "temperature (°C)": 21.8, "wind (Units?)": 7.4}]
+)
+
+st.dataframe(SAMPLE_DF)
 
 #Step 3 - FETCH (CACHED)
-# @st.cache_data(ttl=300, show_spinner=False)   # Cache for 5 minutes
+@st.cache_data(ttl=600) # cached for 10 minutes
 
 # def fetch_prices(url: str):
 #     """Return (df, error_message). Never raise. Safe for beginners."""
