@@ -34,7 +34,7 @@ def get_weather():
                           "temperature": j["temperature_2m"],
                           "wind": j["wind_speed_10m"]}])
 
-display(get_weather())
+print(get_weather())
 
 # API_URL = build_url(COINS)
 
