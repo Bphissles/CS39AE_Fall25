@@ -62,34 +62,38 @@ def fetch_weather(url: str):
     except requests.RequestException as e:
         return None, f"Network/HTTP error: {e}"
 
-#Step 4 - REFRESH BUTTON
+# Step 4 - REFRESH BUTTON
 # --- Auto Refresh Controls ---
-# st.subheader("🔁 Auto Refresh Settings")
+st.subheader("🔁 Auto Refresh Settings")
 
-# # Let user choose how often to refresh (in seconds)
-# refresh_sec = st.slider("Refresh every (sec)", 10, 120, 30)
+# Let user choose how often to refresh (in seconds)
+refresh_sec = st.slider("Refresh every (sec)", 10, 120, 30)
 
-# # Toggle to turn automatic refreshing on/off
-# auto_refresh = st.toggle("Enable auto-refresh", value=False)
+# Toggle to turn automatic refreshing on/off
+auto_refresh = st.toggle("Enable auto-refresh", value=False)
 
-# # Show current refresh time
-# st.caption(f"Last refreshed at: {time.strftime('%H:%M:%S')}")
+# Show current refresh time
+st.caption(f"Last refreshed at: {time.strftime('%H:%M:%S')}")
 
-# #Step 5 - MAIN VIEW
-# st.subheader("Prices")
-# df, err = fetch_prices(API_URL)
+# Step 5 - MAIN VIEW
+st.subheader("Live Weather Data (with Auto-Refresh)")
+df, err = fetch_weather(wurl)
 
-# if err:
-#     st.warning(f"{err}\nShowing sample data so the demo continues.")
-#     df = SAMPLE_DF.copy()
+if err:
+    st.warning(f"{err}\nShowing sample data so the demo continues.")
+    df = SAMPLE_DF.copy()
 
-# st.dataframe(df, use_container_width=True)
+st.dataframe(df, use_container_width=True)
 
-# fig = px.bar(df, x="coin", y=VS, title=f"Current price ({VS.upper()})")
-# st.plotly_chart(fig, use_container_width=True)
+# Create metric displays for temperature and wind
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("Temperature", f"{df['temperature (°C)'].iloc[0]:.1f} °C")
+with col2:
+    st.metric("Wind Speed", f"{df['wind (km/h)'].iloc[0]:.1f} km/h")
 
-# # If auto-refresh is ON, wait and rerun the app
-# if auto_refresh:
-#     time.sleep(refresh_sec)
-#     fetch_prices.clear()
-#     st.rerun()
+# If auto-refresh is ON, wait and rerun the app
+if auto_refresh:
+    time.sleep(refresh_sec)
+    fetch_weather.clear()
+    st.rerun()
