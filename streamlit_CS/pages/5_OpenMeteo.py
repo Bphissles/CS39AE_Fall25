@@ -34,7 +34,9 @@ def get_weather():
                           "temperature": j["temperature_2m"],
                           "wind": j["wind_speed_10m"]}])
 
-print(get_weather())
+st.subheader("Weather Data")
+df = get_weather()
+st.dataframe(df)
 
 # API_URL = build_url(COINS)
 
