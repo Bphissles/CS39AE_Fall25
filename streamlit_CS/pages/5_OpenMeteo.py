@@ -22,7 +22,7 @@ st.caption("Friendly demo with manual refresh + fallback data so it never crashe
 
 lat, lon = 39.7392, -104.9903  # Denver
 wurl = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,wind_speed_10m"
-# @st.cache_data(ttl=600)
+@st.cache_data(ttl=600) # cached for 10 minutes
 def get_weather():
     r = requests.get(wurl, timeout=10); r.raise_for_status()
     j = r.json()["current"]
@@ -41,8 +41,6 @@ SAMPLE_DF = pd.DataFrame(
 
 st.dataframe(SAMPLE_DF)
 
-#Step 3 - FETCH (CACHED)
-@st.cache_data(ttl=600) # cached for 10 minutes
 
 # def fetch_prices(url: str):
 #     """Return (df, error_message). Never raise. Safe for beginners."""
