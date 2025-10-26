@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 import plotly.express as px
 import time
+from datetime import datetime, timezone
 
 st.set_page_config(page_title="Live API Demo (Simple)", page_icon="📡", layout="wide")
 # Disable fade/transition so charts don't blink between reruns
@@ -17,20 +18,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("📡 Simple Live Data Demo (Open-Meteo)")
-st.caption("Friendly demo with manual refresh + fallback data so it never crashes.")
-
+st.caption("Friendly demo with manual refresh")
 
 lat, lon = 39.7392, -104.9903  # Denver
 # Documentation: https://open-meteo.com/en/docs
-# Fetch current weather
-wurl = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,wind_speed_10m"
-
-# Fetch hourly forecast data (returns arrays)
-hourly_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&hourly=temperature_2m,wind_speed_10m&past_days=1"
+# Combined API URL - fetch both current and hourly data in one call
+today = datetime.now(timezone.utc).date()
+combined_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,wind_speed_10m&start_date={today}&end_date={today}&timezone=auto"
 
 @st.cache_data(ttl=600) # cached for 10 minutes
 def get_weather():
-    r = requests.get(wurl, timeout=10); r.raise_for_status()
+    r = requests.get(combined_url, timeout=10); r.raise_for_status()
     j = r.json()["current"]
     return pd.DataFrame([{"time": pd.to_datetime(j["time"]),
                           "temperature (°C)": j["temperature_2m"],
@@ -40,47 +38,39 @@ st.subheader("Weather Data")
 
 
 @st.cache_data(ttl=600, show_spinner=False)  # Cache for 10 minutes
-def fetch_weather(url: str):
-    """Return (df, error_message). Never raise. Safe for beginners."""
+def fetch_all_weather(url: str):
+    """Fetch both current and hourly weather data in one API call. Returns (current_df, hourly_df, error_message)."""
     try:
         resp = requests.get(url, timeout=10)
-        # Handle 429 and other non-200s
         if resp.status_code == 429:
             retry_after = resp.headers.get("Retry-After", "a bit")
-            return None, f"429 Too Many Requests — try again after {retry_after}s"
+            return None, None, f"429 Too Many Requests — try again after {retry_after}s"
         resp.raise_for_status()
         data = resp.json()
+        
+        # Parse current weather
         current = data["current"]
-        df = pd.DataFrame([{
+        current_df = pd.DataFrame([{
             "time": pd.to_datetime(current["time"]),
             "temperature (°C)": current["temperature_2m"],
             "wind (km/h)": current["wind_speed_10m"]
         }])
-        return df, None
-    except requests.RequestException as e:
-        return None, f"Network/HTTP error: {e}"
-
-@st.cache_data(ttl=600, show_spinner=False)  # Cache for 10 minutes
-def fetch_hourly_weather(url: str):
-    """Fetch hourly weather data (returns arrays). Returns (df, error_message)."""
-    try:
-        resp = requests.get(url, timeout=10)
-        if resp.status_code == 429:
-            retry_after = resp.headers.get("Retry-After", "a bit")
-            return None, f"429 Too Many Requests — try again after {retry_after}s"
-        resp.raise_for_status()
-        data = resp.json()
-        hourly = data["hourly"]
         
-        # Convert arrays to DataFrame
-        df = pd.DataFrame({
+        # Parse hourly weather
+        hourly = data["hourly"]
+        hourly_df = pd.DataFrame({
             "time": pd.to_datetime(hourly["time"]),
             "temperature (°C)": hourly["temperature_2m"],
             "wind (km/h)": hourly["wind_speed_10m"]
         })
-        return df, None
+        
+        # Filter to show only data up to current time (not future forecast)
+        now = pd.Timestamp.now(tz='UTC')
+        hourly_df = hourly_df[hourly_df['time'] <= now]
+        
+        return current_df, hourly_df, None
     except requests.RequestException as e:
-        return None, f"Network/HTTP error: {e}"
+        return None, None, f"Network/HTTP error: {e}"
 
 # Step 4 - REFRESH BUTTON
 # --- Auto Refresh Controls ---
@@ -97,23 +87,27 @@ st.caption(f"Last refreshed at: {time.strftime('%H:%M:%S')}")
 
 # Step 5 - MAIN VIEW
 st.subheader("Live Weather Data (with Auto-Refresh)")
-df, err = fetch_weather(wurl)
+current_df, hourly_df, err = fetch_all_weather(combined_url)
 
 if err:
     st.warning(f"{err}\nShowing sample data so the demo continues.")
-    df = pd.DataFrame([{"time": pd.to_datetime("2025-10-22 16:41:55"), "temperature (°C)": 21.8, "wind (km/h)": 7.4}])
+    current_df = pd.DataFrame([{"time": pd.to_datetime("2025-10-22 16:41:55"), "temperature (°C)": 21.8, "wind (km/h)": 7.4}])
+    hourly_df = None
 
-st.dataframe(df, use_container_width=True)
+# Display current weather data
+st.dataframe(current_df, use_container_width=True)
+
+# Create metric displays for temperature and wind
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("Temperature", f"{current_df['temperature (°C)'].iloc[0]:.1f} °C")
+with col2:
+    st.metric("Wind Speed", f"{current_df['wind (km/h)'].iloc[0]:.1f} km/h")
 
 # --- TIME SERIES VISUALIZATION ---
 st.subheader("📈 Weather Trends Over Time")
 
-# Fetch hourly data from API (past 24 hours + forecast)
-hourly_df, hourly_err = fetch_hourly_weather(hourly_url)
-
-if hourly_err:
-    st.warning(f"Could not fetch hourly data: {hourly_err}")
-elif hourly_df is not None and len(hourly_df) > 0:
+if hourly_df is not None and len(hourly_df) > 0:
     # Create dual-axis line chart using Plotly
     from plotly.subplots import make_subplots
     import plotly.graph_objects as go
@@ -164,12 +158,13 @@ elif hourly_df is not None and len(hourly_df) > 0:
     st.plotly_chart(fig, use_container_width=True)
     
     # Show data point count
-    st.caption(f"📊 Showing {len(hourly_df)} hourly data points (past 24 hours)")
+    st.caption(f"📊 Showing {len(hourly_df)} hourly data points (today from midnight to now)")
+
 else:
     st.info("Waiting for hourly data...")
 
 # If auto-refresh is ON, wait and rerun the app
 if auto_refresh:
     time.sleep(refresh_sec)
-    fetch_weather.clear()
+    fetch_all_weather.clear()
     st.rerun()
