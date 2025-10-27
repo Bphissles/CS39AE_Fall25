@@ -65,6 +65,10 @@ def fetch_all_weather(url: str):
         })
         
         # Filter to show only data up to current time (not future forecast)
+        # timezone fix from error: TypeError: Invalid comparison between dtype=datetime64[ns] and Timestamp
+        if hourly_df['time'].dt.tz is None:
+            # If time is timezone-naive, localize it to UTC
+            hourly_df['time'] = hourly_df['time'].dt.tz_localize('UTC')
         now = pd.Timestamp.now(tz='UTC')
         hourly_df = hourly_df[hourly_df['time'] <= now]
         
