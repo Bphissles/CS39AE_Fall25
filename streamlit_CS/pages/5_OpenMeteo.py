@@ -24,7 +24,8 @@ lat, lon = 39.7392, -104.9903  # Denver
 # Documentation: https://open-meteo.com/en/docs
 # Combined API URL - fetch both current and hourly data in one call
 today = datetime.now(timezone.utc).date()
-combined_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,wind_speed_10m&start_date={today}&end_date={today}&timezone=auto"
+# Combined API URL - fetch both current and hourly data (past 7 days for better visualization)
+combined_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,wind_speed_10m&past_days=7&timezone=auto"
 
 @st.cache_data(ttl=600) # cached for 10 minutes
 def get_weather():
@@ -162,7 +163,7 @@ if hourly_df is not None and len(hourly_df) > 0:
     st.plotly_chart(fig, use_container_width=True)
     
     # Show data point count
-    st.caption(f"📊 Showing {len(hourly_df)} hourly data points (today from midnight to now)")
+    st.caption(f"📊 Showing {len(hourly_df)} hourly data points (past 7 days)")
 
 else:
     st.info("Waiting for hourly data...")
