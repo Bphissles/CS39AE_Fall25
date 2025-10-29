@@ -1,28 +1,7 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-# Page configuration
 st.set_page_config(page_title="Student Performance Dashboard", layout="wide")
-
-# Title
 st.title("Student Performance Factors")
-
-# Generate sample data for demonstration
-np.random.seed(42)
-n_students = 100
-data = pd.DataFrame({
-    'hours_studied': np.random.randint(1, 10, n_students),
-    'exam_score': np.random.randint(50, 100, n_students),
-    'activity_level': np.random.randint(1, 6, n_students),
-    'sleep_hours': np.random.randint(4, 10, n_students)
-})
-
-# Add some correlation
-data['exam_score'] = data['hours_studied'] * 5 + np.random.randint(-10, 10, n_students)
-data['exam_score'] = data['exam_score'].clip(50, 100)
 
 st.divider()
 # ROW 1: 
