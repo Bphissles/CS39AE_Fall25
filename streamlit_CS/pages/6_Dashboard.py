@@ -11,6 +11,8 @@ with col1_r1:
     st.subheader("Hours Studied Vs Exam Score")
     st.caption("Scatter plot + trendline")
 
+    # graph
+
 with col2_r1:
     st.subheader("Heading")
     st.write("Big Copy")
